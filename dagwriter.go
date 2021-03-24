@@ -16,7 +16,7 @@ type DagWriter interface {
 	Delete(ipld.Link) error
 }
 
-type DagMultiWriter interface {
+type DagBatchWriter interface {
 	DagWriter
 	Commit() error
 }
@@ -24,7 +24,7 @@ type DagMultiWriter interface {
 // DagWritingService is an interface for reading and writing DAGs
 type DagWritingService interface {
 	DagWriter
-	NewMultiWriter() DagMultiWriter
+	NewBatchWriter() DagBatchWriter
 }
 
 type dagWritingService struct {
@@ -66,8 +66,8 @@ func (ds dagWritingService) Delete(lnk ipld.Link) error {
 	return ds.bs.DeleteBlock(asCidLink.Cid)
 }
 
-func (ds dagWritingService) NewMultiWriter() DagMultiWriter {
-	dmw := &dagMultiWriter{bs: ds.bs, cache: newCachedOperationsStore()}
+func (ds dagWritingService) NewBatchWriter() DagBatchWriter {
+	dmw := &dagBatchWriter{bs: ds.bs, cache: newCachedOperationsStore()}
 	ls := ipld.LinkSystem{
 		StorageWriteOpener: dmw.put,
 		EncoderChooser:     ds.EncoderChooser,

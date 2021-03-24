@@ -13,13 +13,13 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
-type dagMultiWriter struct {
+type dagBatchWriter struct {
 	*ipld.LinkSystem
 	bs    blockstore.Blockstore
 	cache *cachedOperationsStore
 }
 
-func (tds *dagMultiWriter) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
+func (tds *dagBatchWriter) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
 
 	buf := bytes.Buffer{}
 	return &buf, func(lnk ipld.Link) error {
@@ -32,7 +32,7 @@ func (tds *dagMultiWriter) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWr
 	}, nil
 }
 
-func (tds *dagMultiWriter) Delete(lnk ipld.Link) error {
+func (tds *dagBatchWriter) Delete(lnk ipld.Link) error {
 	asCidLink, ok := lnk.(cidlink.Link)
 	if !ok {
 		return fmt.Errorf("Unsupported Link Type")
@@ -41,7 +41,7 @@ func (tds *dagMultiWriter) Delete(lnk ipld.Link) error {
 	return nil
 }
 
-func (tds *dagMultiWriter) Commit() error {
+func (tds *dagBatchWriter) Commit() error {
 	blks, deletes, err := tds.cache.reset()
 	if err != nil {
 		return err

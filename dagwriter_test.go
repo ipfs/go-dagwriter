@@ -110,7 +110,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 	}
 }
 
-func TestMultiWriter(t *testing.T) {
+func TestBatchWriter(t *testing.T) {
 	ctx := context.Background()
 	ds := datastore.NewMapDatastore()
 	bstore := blockstore.NewBlockstore(ds)
@@ -129,7 +129,7 @@ func TestMultiWriter(t *testing.T) {
 	existingLnk, err := writer.Store(ipld.LinkContext{Ctx: ctx}, lp, existing)
 	require.NoError(t, err)
 
-	multiwriter := writer.NewMultiWriter()
+	batchWriter := writer.NewBatchWriter()
 
 	nodeConstructionSeq := []func(prevLinks []ipld.Link) (ipld.Node, error){
 		func(prevLinks []ipld.Link) (ipld.Node, error) {
@@ -163,7 +163,7 @@ func TestMultiWriter(t *testing.T) {
 	for _, constructor := range nodeConstructionSeq {
 		nd, err := constructor(links)
 		require.NoError(t, err)
-		lnk, err := multiwriter.Store(ipld.LinkContext{Ctx: ctx}, lp, nd)
+		lnk, err := batchWriter.Store(ipld.LinkContext{Ctx: ctx}, lp, nd)
 		require.NoError(t, err)
 		// verify the link is not in the block store
 		_, err = bstore.Get(lnk.(cidlink.Link).Cid)
@@ -172,20 +172,20 @@ func TestMultiWriter(t *testing.T) {
 	}
 
 	// add a delete operation for the existing node and verify it's still present
-	err = multiwriter.Delete(existingLnk)
+	err = batchWriter.Delete(existingLnk)
 	require.NoError(t, err)
 	_, err = bstore.Get(existingLnk.(cidlink.Link).Cid)
 	require.NoError(t, err)
 
 	// add a delete operation for one of the nodes
-	err = multiwriter.Delete(links[0])
+	err = batchWriter.Delete(links[0])
 	require.NoError(t, err)
 
 	// commit and check:
 	// written nodes are present in store
 	// deleted existing node is gone
 	// written then deleted node never written
-	err = multiwriter.Commit()
+	err = batchWriter.Commit()
 	require.NoError(t, err)
 	assertPresent(t, bstore, links[1])
 	assertPresent(t, bstore, links[2])
