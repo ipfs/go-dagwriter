@@ -1,2 +1,2 @@
-# go-dagservice
+# go-dagwriter
 
