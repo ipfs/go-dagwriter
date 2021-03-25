@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-dagwriter"
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	dagpb "github.com/ipld/go-codec-dagpb"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -25,7 +27,8 @@ func TestDagWriterRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	ds := datastore.NewMapDatastore()
 	bstore := blockstore.NewBlockstore(ds)
-	writer := dagwriter.NewDagWriter(bstore)
+	blockService := blockservice.New(bstore, offline.Exchange(bstore))
+	writer := dagwriter.NewDagWriter(blockService)
 
 	bNode, err := qp.BuildMap(basicnode.Prototype__Map{}, 1, func(ma ipld.MapAssembler) {
 		qp.MapEntry(ma, "three", qp.Bool(true))
@@ -114,7 +117,8 @@ func TestBatchWriter(t *testing.T) {
 	ctx := context.Background()
 	ds := datastore.NewMapDatastore()
 	bstore := blockstore.NewBlockstore(ds)
-	writer := dagwriter.NewDagWriter(bstore)
+	blockService := blockservice.New(bstore, offline.Exchange(bstore))
+	writer := dagwriter.NewDagWriter(blockService)
 	lp := cidlink.LinkPrototype{cid.Prefix{
 		Version:  1,
 		Codec:    0x71,

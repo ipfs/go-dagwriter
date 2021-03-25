@@ -7,15 +7,15 @@ import (
 	"sync"
 
 	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
 type dagBatchWriter struct {
 	*ipld.LinkSystem
-	bs    blockstore.Blockstore
+	bs    blockservice.BlockService
 	cache *cachedOperationsStore
 }
 
@@ -52,7 +52,7 @@ func (tds *dagBatchWriter) Commit() error {
 			return nil
 		}
 	}
-	return tds.bs.PutMany(blks)
+	return tds.bs.AddBlocks(blks)
 }
 
 type cacheRecord struct {

@@ -6,34 +6,44 @@ import (
 	"io"
 
 	blocks "github.com/ipfs/go-block-format"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/ipfs/go-blockservice"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
+// DagWriter provides access for writing and deleting ipld.Nodes in an underlying store
+// Note: on its own, the dag writer provides no methods for loading/reading nodes
 type DagWriter interface {
+	// Store stores the given ipld.Node in the underlying store, constructing a link/CID
+	// from the data in the node and the provided LinkPrototype
 	Store(lnkCtx ipld.LinkContext, lp ipld.LinkPrototype, n ipld.Node) (ipld.Link, error)
+	// Delete deletes the node matching the given link from the underlying store
 	Delete(ipld.Link) error
 }
 
+// DagBatchWriter is a DagWriter that allows queing up several write and delete commands
+// to an underlying store, then executing them in a single commit
 type DagBatchWriter interface {
 	DagWriter
+	// Commit executes the queued operations to the underlying data store
 	Commit() error
 }
 
-// DagWritingService is an interface for reading and writing DAGs
+// DagWritingService provides both methods for writing and deleting ipld.Nodes atomically,
+// and for instantiating batch operations
 type DagWritingService interface {
 	DagWriter
+	// NewBatchWriter instantiates a new multi-operation write/delete
 	NewBatchWriter() DagBatchWriter
 }
 
 type dagWritingService struct {
 	*ipld.LinkSystem
-	bs blockstore.Blockstore
+	bs blockservice.BlockService
 }
 
 // NewDagWriter returns a new DagWritingService interface
-func NewDagWriter(bs blockstore.Blockstore) DagWritingService {
+func NewDagWriter(bs blockservice.BlockService) DagWritingService {
 	ds := dagWritingService{bs: bs}
 	ls := cidlink.DefaultLinkSystem()
 	ls.StorageWriteOpener = ds.put
@@ -53,7 +63,7 @@ func (ds dagWritingService) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockW
 		if err != nil {
 			return err
 		}
-		return ds.bs.Put(block)
+		return ds.bs.AddBlock(block)
 	}
 	return buffer, committer, nil
 }
