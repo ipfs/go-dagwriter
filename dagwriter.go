@@ -2,6 +2,7 @@ package dagwriter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
@@ -18,7 +19,7 @@ type DagWriter interface {
 	// from the data in the node and the provided LinkPrototype
 	Store(lnkCtx ipld.LinkContext, lp ipld.LinkPrototype, n ipld.Node) (ipld.Link, error)
 	// Delete deletes the node matching the given link from the underlying store
-	Delete(ipld.Link) error
+	Delete(ctx context.Context, lnk ipld.Link) error
 }
 
 // DagBatchWriter is a DagWriter that allows queing up several write and delete commands
@@ -68,7 +69,7 @@ func (ds dagWritingService) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockW
 	return buffer, committer, nil
 }
 
-func (ds dagWritingService) Delete(lnk ipld.Link) error {
+func (ds dagWritingService) Delete(ctx context.Context, lnk ipld.Link) error {
 	asCidLink, ok := lnk.(cidlink.Link)
 	if !ok {
 		return fmt.Errorf("Unsupported Link Type")

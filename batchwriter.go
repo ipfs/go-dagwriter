@@ -2,6 +2,7 @@ package dagwriter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"sync"
@@ -32,7 +33,7 @@ func (tds *dagBatchWriter) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWr
 	}, nil
 }
 
-func (tds *dagBatchWriter) Delete(lnk ipld.Link) error {
+func (tds *dagBatchWriter) Delete(ctx context.Context, lnk ipld.Link) error {
 	asCidLink, ok := lnk.(cidlink.Link)
 	if !ok {
 		return fmt.Errorf("Unsupported Link Type")

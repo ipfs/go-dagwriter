@@ -104,7 +104,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 				require.Equal(t, data.node, nd)
 
 				// test delete after load
-				err = writer.Delete(lnk)
+				err = writer.Delete(ctx, lnk)
 				require.NoError(t, err)
 				blk, err = bstore.Get(clnk.Cid)
 				require.EqualError(t, err, blockstore.ErrNotFound.Error())
@@ -176,13 +176,13 @@ func TestBatchWriter(t *testing.T) {
 	}
 
 	// add a delete operation for the existing node and verify it's still present
-	err = batchWriter.Delete(existingLnk)
+	err = batchWriter.Delete(ctx, existingLnk)
 	require.NoError(t, err)
 	_, err = bstore.Get(existingLnk.(cidlink.Link).Cid)
 	require.NoError(t, err)
 
 	// add a delete operation for one of the nodes
-	err = batchWriter.Delete(links[0])
+	err = batchWriter.Delete(ctx, links[0])
 	require.NoError(t, err)
 
 	// commit and check:
