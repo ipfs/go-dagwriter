@@ -4,7 +4,7 @@
 [![](https://img.shields.io/badge/project-IPFS-blue.svg?style=flat-square)](http://ipfs.io/)
 
 
-DagWriter is the glue for mutating (adding, removing) [ipld](https://github.com/ipld/go-ipld-prime) nodes in a [block service](github.com/ipfs/go-blockservice).
+DagWriter is the glue for mutating (adding, removing) [ipld](https://github.com/ipld/go-ipld-prime) nodes in a [block service](https://github.com/ipfs/go-blockservice).
 
 ## Usage
 
