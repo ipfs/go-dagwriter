@@ -43,6 +43,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 			}))
 		}))
 	})
+	require.NoError(t, err)
 
 	testCases := map[string]struct {
 		lp          ipld.LinkPrototype
@@ -52,7 +53,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 		decoder     ipld.Decoder
 	}{
 		"basic node": {
-			lp: cidlink.LinkPrototype{cid.Prefix{
+			lp: cidlink.LinkPrototype{Prefix: cid.Prefix{
 				Version:  1,
 				Codec:    0x71,
 				MhType:   0x17,
@@ -63,7 +64,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 			decoder: dagcbor.Decode,
 		},
 		"pb node": {
-			lp: cidlink.LinkPrototype{cid.Prefix{
+			lp: cidlink.LinkPrototype{Prefix: cid.Prefix{
 				Version:  1,
 				Codec:    0x70,
 				MhType:   0x17,
@@ -74,7 +75,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 			decoder: dagpb.Decode,
 		},
 		"node that erros on write": {
-			lp: cidlink.LinkPrototype{cid.Prefix{
+			lp: cidlink.LinkPrototype{Prefix: cid.Prefix{
 				Version:  1,
 				Codec:    0x70,
 				MhType:   0x17,
@@ -106,7 +107,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 				// test delete after load
 				err = writer.Delete(ctx, lnk)
 				require.NoError(t, err)
-				blk, err = bstore.Get(clnk.Cid)
+				_, err = bstore.Get(clnk.Cid)
 				require.EqualError(t, err, blockstore.ErrNotFound.Error())
 			}
 		})
@@ -119,7 +120,7 @@ func TestBatchWriter(t *testing.T) {
 	bstore := blockstore.NewBlockstore(ds)
 	blockService := blockservice.New(bstore, offline.Exchange(bstore))
 	writer := dagwriter.NewDagWriter(blockService)
-	lp := cidlink.LinkPrototype{cid.Prefix{
+	lp := cidlink.LinkPrototype{Prefix: cid.Prefix{
 		Version:  1,
 		Codec:    0x71,
 		MhType:   0x17,
@@ -163,8 +164,8 @@ func TestBatchWriter(t *testing.T) {
 			})
 		},
 	}
-	var links []ipld.Link
-	for _, constructor := range nodeConstructionSeq {
+	links := make([]ipld.Link, len(nodeConstructionSeq))
+	for i, constructor := range nodeConstructionSeq {
 		nd, err := constructor(links)
 		require.NoError(t, err)
 		lnk, err := batchWriter.Store(ipld.LinkContext{Ctx: ctx}, lp, nd)
@@ -172,7 +173,7 @@ func TestBatchWriter(t *testing.T) {
 		// verify the link is not in the block store
 		_, err = bstore.Get(lnk.(cidlink.Link).Cid)
 		require.EqualError(t, err, blockstore.ErrNotFound.Error())
-		links = append(links, lnk)
+		links[i] = lnk
 	}
 
 	// add a delete operation for the existing node and verify it's still present
