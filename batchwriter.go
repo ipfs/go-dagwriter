@@ -26,7 +26,7 @@ func (tds *dagBatchWriter) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWr
 	return &buf, func(lnk ipld.Link) error {
 		asCidLink, ok := lnk.(cidlink.Link)
 		if !ok {
-			return fmt.Errorf("Unsupported Link Type")
+			return fmt.Errorf("unsupported link type %v", lnk)
 		}
 		tds.cache.write(asCidLink.Cid, buf.Bytes())
 		return nil
@@ -36,7 +36,7 @@ func (tds *dagBatchWriter) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWr
 func (tds *dagBatchWriter) Delete(ctx context.Context, lnk ipld.Link) error {
 	asCidLink, ok := lnk.(cidlink.Link)
 	if !ok {
-		return fmt.Errorf("Unsupported Link Type")
+		return fmt.Errorf("unsupported link type %v", lnk)
 	}
 	tds.cache.delete(asCidLink.Cid)
 	return nil

@@ -58,7 +58,7 @@ func (ds dagWritingService) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockW
 	committer := func(lnk ipld.Link) error {
 		asCidLink, ok := lnk.(cidlink.Link)
 		if !ok {
-			return fmt.Errorf("Unsupported Link Type")
+			return fmt.Errorf("unsupported link type %v", lnk)
 		}
 		block, err := blocks.NewBlockWithCid(buffer.Bytes(), asCidLink.Cid)
 		if err != nil {
@@ -72,7 +72,7 @@ func (ds dagWritingService) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockW
 func (ds dagWritingService) Delete(ctx context.Context, lnk ipld.Link) error {
 	asCidLink, ok := lnk.(cidlink.Link)
 	if !ok {
-		return fmt.Errorf("Unsupported Link Type")
+		return fmt.Errorf("unsupported link type %v", lnk)
 	}
 	return ds.bs.DeleteBlock(asCidLink.Cid)
 }
