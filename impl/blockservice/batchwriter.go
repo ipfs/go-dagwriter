@@ -1,4 +1,4 @@
-package dagwriter
+package bsdagwriter
 
 import (
 	"bytes"
