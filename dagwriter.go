@@ -11,7 +11,7 @@ import (
 type DagWriter interface {
 	// Store stores the given ipld.Node in the underlying store, constructing a link/CID
 	// from the data in the node and the provided LinkPrototype
-	Store(lnkCtx ipld.LinkContext, lp ipld.LinkPrototype, n ipld.Node) (ipld.Link, error)
+	Store(ctx context.Context, lnkCtx ipld.LinkContext, lp ipld.LinkPrototype, n ipld.Node) (ipld.Link, error)
 	// Delete deletes the node matching the given link from the underlying store
 	Delete(ctx context.Context, lnk ipld.Link) error
 }
@@ -21,7 +21,7 @@ type DagWriter interface {
 type DagBatchWriter interface {
 	DagWriter
 	// Commit executes the queued operations to the underlying data store
-	Commit() error
+	Commit(ctx context.Context) error
 }
 
 // DagWritingService provides both methods for writing and deleting ipld.Nodes atomically,

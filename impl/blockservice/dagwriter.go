@@ -39,9 +39,13 @@ func (ds dagWritingService) put(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockW
 		if err != nil {
 			return err
 		}
-		return ds.bs.AddBlock(block)
+		return ds.bs.AddBlock(context.TODO(), block)
 	}
 	return buffer, committer, nil
+}
+
+func (ds dagWritingService) Store(_ context.Context, lnkCtx ipld.LinkContext, lp ipld.LinkPrototype, n ipld.Node) (ipld.Link, error) {
+	return ds.LinkSystem.Store(lnkCtx, lp, n)
 }
 
 func (ds dagWritingService) Delete(ctx context.Context, lnk ipld.Link) error {
@@ -49,7 +53,7 @@ func (ds dagWritingService) Delete(ctx context.Context, lnk ipld.Link) error {
 	if !ok {
 		return fmt.Errorf("unsupported link type %v", lnk)
 	}
-	return ds.bs.DeleteBlock(asCidLink.Cid)
+	return ds.bs.DeleteBlock(ctx, asCidLink.Cid)
 }
 
 func (ds dagWritingService) NewBatchWriter() dagwriter.DagBatchWriter {

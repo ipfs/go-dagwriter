@@ -88,7 +88,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 
 	for testCase, data := range testCases {
 		t.Run(testCase, func(t *testing.T) {
-			lnk, err := writer.Store(ipld.LinkContext{Ctx: ctx}, data.lp, data.node)
+			lnk, err := writer.Store(ctx, ipld.LinkContext{Ctx: ctx}, data.lp, data.node)
 			if err != nil {
 				require.EqualError(t, err, data.expectedErr.Error())
 			} else {
@@ -96,7 +96,7 @@ func TestDagWriterRoundTrip(t *testing.T) {
 				require.NoError(t, err)
 				clnk, isCidLink := lnk.(cidlink.Link)
 				require.True(t, isCidLink)
-				blk, err := bstore.Get(clnk.Cid)
+				blk, err := bstore.Get(ctx, clnk.Cid)
 				require.NoError(t, err)
 				nb := data.np.NewBuilder()
 				err = data.decoder(nb, bytes.NewReader(blk.RawData()))
@@ -107,8 +107,9 @@ func TestDagWriterRoundTrip(t *testing.T) {
 				// test delete after load
 				err = writer.Delete(ctx, lnk)
 				require.NoError(t, err)
-				_, err = bstore.Get(clnk.Cid)
-				require.EqualError(t, err, blockstore.ErrNotFound.Error())
+				_, err = bstore.Get(ctx, clnk.Cid)
+				require.Error(t, err)
+				require.ErrorContainsf(t, err, "not found", err.Error())
 			}
 		})
 	}
@@ -131,7 +132,7 @@ func TestBatchWriter(t *testing.T) {
 		qp.MapEntry(ma, "applesauce", qp.String("red"))
 	})
 	require.NoError(t, err)
-	existingLnk, err := writer.Store(ipld.LinkContext{Ctx: ctx}, lp, existing)
+	existingLnk, err := writer.Store(ctx, ipld.LinkContext{Ctx: ctx}, lp, existing)
 	require.NoError(t, err)
 
 	batchWriter := writer.NewBatchWriter()
@@ -168,18 +169,18 @@ func TestBatchWriter(t *testing.T) {
 	for i, constructor := range nodeConstructionSeq {
 		nd, err := constructor(links)
 		require.NoError(t, err)
-		lnk, err := batchWriter.Store(ipld.LinkContext{Ctx: ctx}, lp, nd)
+		lnk, err := batchWriter.Store(ctx, ipld.LinkContext{Ctx: ctx}, lp, nd)
 		require.NoError(t, err)
 		// verify the link is not in the block store
-		_, err = bstore.Get(lnk.(cidlink.Link).Cid)
-		require.EqualError(t, err, blockstore.ErrNotFound.Error())
+		_, err = bstore.Get(ctx, lnk.(cidlink.Link).Cid)
+		require.EqualError(t, err, datastore.ErrNotFound.Error())
 		links[i] = lnk
 	}
 
 	// add a delete operation for the existing node and verify it's still present
 	err = batchWriter.Delete(ctx, existingLnk)
 	require.NoError(t, err)
-	_, err = bstore.Get(existingLnk.(cidlink.Link).Cid)
+	_, err = bstore.Get(ctx, existingLnk.(cidlink.Link).Cid)
 	require.NoError(t, err)
 
 	// add a delete operation for one of the nodes
@@ -190,7 +191,7 @@ func TestBatchWriter(t *testing.T) {
 	// written nodes are present in store
 	// deleted existing node is gone
 	// written then deleted node never written
-	err = batchWriter.Commit()
+	err = batchWriter.Commit(ctx)
 	require.NoError(t, err)
 	assertPresent(t, bstore, links[1])
 	assertPresent(t, bstore, links[2])
@@ -207,11 +208,13 @@ func generateRandomCid() cid.Cid {
 }
 
 func assertPresent(t *testing.T, bstore blockstore.Blockstore, lnk ipld.Link) {
-	_, err := bstore.Get(lnk.(cidlink.Link).Cid)
+	ctx := context.Background()
+	_, err := bstore.Get(ctx, lnk.(cidlink.Link).Cid)
 	require.NoError(t, err)
 }
 
 func assertNotPresent(t *testing.T, bstore blockstore.Blockstore, lnk ipld.Link) {
-	_, err := bstore.Get(lnk.(cidlink.Link).Cid)
-	require.EqualError(t, err, blockstore.ErrNotFound.Error())
+	ctx := context.Background()
+	_, err := bstore.Get(ctx, lnk.(cidlink.Link).Cid)
+	require.EqualError(t, err, datastore.ErrNotFound.Error())
 }

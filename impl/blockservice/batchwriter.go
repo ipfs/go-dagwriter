@@ -42,18 +42,22 @@ func (tds *dagBatchWriter) Delete(ctx context.Context, lnk ipld.Link) error {
 	return nil
 }
 
-func (tds *dagBatchWriter) Commit() error {
+func (tds *dagBatchWriter) Commit(ctx context.Context) error {
 	blks, deletes, err := tds.cache.reset()
 	if err != nil {
 		return err
 	}
 	for _, c := range deletes {
-		err := tds.bs.DeleteBlock(c)
+		err := tds.bs.DeleteBlock(ctx, c)
 		if err != nil {
 			return nil
 		}
 	}
-	return tds.bs.AddBlocks(blks)
+	return tds.bs.AddBlocks(ctx, blks)
+}
+
+func (tds *dagBatchWriter) Store(_ context.Context, lnkCtx ipld.LinkContext, lp ipld.LinkPrototype, n ipld.Node) (ipld.Link, error) {
+	return tds.LinkSystem.Store(lnkCtx, lp, n)
 }
 
 type cacheRecord struct {
