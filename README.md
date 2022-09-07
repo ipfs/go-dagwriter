@@ -1,5 +1,7 @@
 # go-dagwriter
 
+## This package has been deprecated and archived. See https://pkg.go.dev/github.com/ipld/go-ipld-prime/storage/bsrvadapter for an alternative.
+
 [![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
 [![](https://img.shields.io/badge/project-IPFS-blue.svg?style=flat-square)](http://ipfs.io/)
 
